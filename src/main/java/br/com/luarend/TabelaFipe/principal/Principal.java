@@ -1,9 +1,11 @@
 package br.com.luarend.TabelaFipe.principal;
 
+import br.com.luarend.TabelaFipe.model.DadosModelo;
 import br.com.luarend.TabelaFipe.model.DadosVeiculo;
 import br.com.luarend.TabelaFipe.service.HttpRequests;
 import br.com.luarend.TabelaFipe.service.JsonDataMapper;
 
+import java.util.Comparator;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -18,14 +20,14 @@ public class Principal {
         System.out.println("Digite o que deseja buscar: " +
                 "Carros / Caminhao / Moto");
 
-        var tipoVeiculo = scanner.nextLine();
+        var input = scanner.nextLine();
         String endereco;
 
-        if (tipoVeiculo.toLowerCase().contains("carr")) {
+        if (input.toLowerCase().contains("carr")) {
             endereco = URL_BASE + "carros/marcas/";
-        } else if (tipoVeiculo.toLowerCase().contains("caminh")) {
+        } else if (input.toLowerCase().contains("caminh")) {
             endereco = URL_BASE + "caminhoes/marcas/";
-        } else if (tipoVeiculo.toLowerCase().contains("moto")) {
+        } else if (input.toLowerCase().contains("moto")) {
             endereco = URL_BASE + "motos/marcas/";
         } else {
             System.out.println("Opção inválida, tente novamente!");
@@ -34,7 +36,19 @@ public class Principal {
 
         var json = httpRequests.sendRequest(endereco);
         var dadosVeiculos = jsonDataMapper.convertJsonToList(json, DadosVeiculo.class);
-        System.out.println(dadosVeiculos);
 
+        dadosVeiculos.stream()
+                .sorted(Comparator.comparing(DadosVeiculo::nome))
+                .forEach(System.out::println);
+        System.out.println("*** Informe o CÓDIGO da marca para consulta: ***");
+        var codigoMarca = scanner.nextLine();
+
+        endereco = endereco + codigoMarca + "/modelos/";
+        json = httpRequests.sendRequest(endereco);
+        var dadosModelos = jsonDataMapper.convertJsonToObject(json, DadosModelo.class);
+
+        dadosModelos.modelos().stream()
+                .sorted(Comparator.comparing(DadosVeiculo::nome))
+                .forEach(System.out::println);
     }
 }
