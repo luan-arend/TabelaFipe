@@ -2,12 +2,12 @@ package br.com.luarend.TabelaFipe.principal;
 
 import br.com.luarend.TabelaFipe.model.DadosModelo;
 import br.com.luarend.TabelaFipe.model.DadosVeiculo;
+import br.com.luarend.TabelaFipe.model.Veiculo;
 import br.com.luarend.TabelaFipe.service.HttpRequests;
 import br.com.luarend.TabelaFipe.service.JsonDataMapper;
 
-import java.util.Comparator;
-import java.util.Locale;
-import java.util.Scanner;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Principal {
     private Scanner scanner = new Scanner(System.in);
@@ -50,5 +50,33 @@ public class Principal {
         dadosModelos.modelos().stream()
                 .sorted(Comparator.comparing(DadosVeiculo::nome))
                 .forEach(System.out::println);
+
+        System.out.println("\nDigite uma parte do nome do carro para ser buscado:");
+        var nomeVeiculo = scanner.nextLine();
+
+        List<DadosVeiculo> modelosFiltrados = dadosModelos.modelos().stream()
+                .filter(m -> m.nome().toLowerCase().contains(nomeVeiculo.toLowerCase()))
+                .collect(Collectors.toList());
+
+        System.out.println("\nModelos filtrados");
+        modelosFiltrados.forEach(System.out::println);
+
+        System.out.println("Digite por favor o código do modelo para buscar os valores de avaliação");
+        var codigoModelo = scanner.nextLine();
+
+        endereco = endereco + codigoModelo + "/anos";
+        json = httpRequests.sendRequest(endereco);
+        List<DadosVeiculo> anos = jsonDataMapper.convertJsonToList(json, DadosVeiculo.class);
+        List<Veiculo> veiculos = new ArrayList<>();
+
+        for (int i = 0; i < anos.size(); i++) {
+            var enderecoAnos = endereco + "/" + anos.get(i).codigo();
+            json = httpRequests.sendRequest(enderecoAnos);
+            Veiculo veiculo = jsonDataMapper.convertJsonToObject(json, Veiculo.class);
+            veiculos.add(veiculo);
+        }
+
+        System.out.println("\nTodos os veículos filtrados com avaliações por ano: ");
+        veiculos.forEach(System.out::println);
     }
 }
